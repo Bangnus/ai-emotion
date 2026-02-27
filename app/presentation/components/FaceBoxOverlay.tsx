@@ -115,7 +115,7 @@ export default function FaceBoxOverlay({ faces, videoRef }: Props) {
           <div key={i}>
             {/* ── Face Bounding Box ── */}
             <div
-              className={`absolute ${color.border} border-2 rounded-lg ${color.shadow} transition-all duration-75 ease-linear`}
+              className={`absolute ${color.border} border-2 rounded-lg ${color.shadow}`}
               style={{
                 left: `${rect.left}%`,
                 top: `${rect.top}%`,
@@ -140,7 +140,7 @@ export default function FaceBoxOverlay({ faces, videoRef }: Props) {
 
             {/* ── Dominant Emotion Label (bottom of face box) ── */}
             <div
-              className="absolute transition-all duration-75 ease-linear flex items-center gap-2"
+              className="absolute flex items-center gap-2"
               style={{
                 left: `${rect.left}%`,
                 top: `${rect.top + rect.height + 0.8}%`,

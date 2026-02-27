@@ -18,9 +18,24 @@ import { uploadImage } from "@/app/infrastructure/upload/uploadService";
 
 import { generateQR } from "@/app/infrastructure/qr/qrService";
 
-import { FaceData } from "@/app/shared/types";
+import { FaceData, FaceBox } from "@/app/shared/types";
 
 const COUNTDOWN_SECONDS = 3;
+const SMOOTH_FACTOR = 0.35; // 0 = no movement, 1 = instant (raw)
+
+// Lerp helper for smooth interpolation
+function lerp(a: number, b: number, t: number) {
+  return a + (b - a) * t;
+}
+
+function smoothBox(prev: FaceBox, next: FaceBox): FaceBox {
+  return {
+    x: lerp(prev.x, next.x, SMOOTH_FACTOR),
+    y: lerp(prev.y, next.y, SMOOTH_FACTOR),
+    width: lerp(prev.width, next.width, SMOOTH_FACTOR),
+    height: lerp(prev.height, next.height, SMOOTH_FACTOR),
+  };
+}
 
 export function useEmotionBooth() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -33,6 +48,9 @@ export function useEmotionBooth() {
   const isCapturing = useRef(false);
   const palmStartTime = useRef<number | null>(null);
   const countdownTimer = useRef<number | null>(null);
+
+  // Store previous frame's smoothed boxes for interpolation
+  const prevBoxes = useRef<FaceBox[]>([]);
 
   useEffect(() => {
     async function init() {
@@ -67,17 +85,34 @@ export function useEmotionBooth() {
             if (pt.y > maxY) maxY = pt.y;
           }
 
+          const rawBox: FaceBox = {
+            x: minX,
+            y: minY,
+            width: maxX - minX,
+            height: maxY - minY,
+          };
+
+          // Apply smoothing if we have previous data for this face
+          const smoothedBox = prevBoxes.current[i]
+            ? smoothBox(prevBoxes.current[i], rawBox)
+            : rawBox;
+
           const emotion = faceResult.faceBlendshapes[i]
             ? analyzeEmotion(faceResult.faceBlendshapes[i].categories)
             : { happy: 0, sad: 0, angry: 0, surprised: 0 };
 
           detectedFaces.push({
-            box: { x: minX, y: minY, width: maxX - minX, height: maxY - minY },
+            box: smoothedBox,
             emotion,
           });
         }
+
+        // Update previous boxes for next frame
+        prevBoxes.current = detectedFaces.map((f) => f.box);
+
         setFaces(detectedFaces);
       } else {
+        prevBoxes.current = [];
         setFaces([]);
       }
 
@@ -93,12 +128,10 @@ export function useEmotionBooth() {
           setPalmDetected(true);
 
           if (palmStartTime.current === null) {
-            // Palm just appeared → start countdown
             palmStartTime.current = Date.now();
             startCountdown();
           }
         } else {
-          // Palm gone → reset
           if (palmStartTime.current !== null) {
             palmStartTime.current = null;
             cancelCountdown();
@@ -120,7 +153,6 @@ export function useEmotionBooth() {
         if (remaining > 0) {
           setCountdown(remaining);
         } else {
-          // Countdown finished → capture!
           clearInterval(countdownTimer.current!);
           countdownTimer.current = null;
           setCountdown(0);
