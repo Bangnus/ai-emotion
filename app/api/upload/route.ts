@@ -12,13 +12,16 @@ export async function POST(req: NextRequest) {
 
     // Upload to Vercel Blob
     const blob = await put(file.name, file, {
-      access: "public",
+      access: "private",
       contentType: file.type,
     });
 
     return NextResponse.json({ url: blob.url });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Upload error:", err);
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Upload failed: " + err.message },
+      { status: 500 }
+    );
   }
 }
