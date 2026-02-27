@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
     // Upload to Vercel Blob using raw buffer
     const blob = await put(file.name, buffer, {
-      access: "private",
+      access: "public",
       contentType: "image/jpeg",
     });
 
