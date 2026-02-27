@@ -13,13 +13,11 @@ export function analyzeEmotion(blendshapes: any[]): EmotionScores {
       s("cheekSquintRight") * 0.2
   );
 
-  // Sad: มุมปากหุบลง + คิ้วด้านในยกขึ้น + ปากล่างยื่น
+  // Sad: มุมปากหุบลง + คิ้วด้านในยกขึ้น (ระวังไม่ให้การอ้าปากเฉยๆ กลายเป็นเศร้า)
   const sad = normalize(
-    s("mouthFrownLeft") * 0.25 +
-      s("mouthFrownRight") * 0.25 +
-      s("browInnerUp") * 0.3 +
-      s("mouthLowerDownLeft") * 0.1 +
-      s("mouthLowerDownRight") * 0.1
+    s("mouthFrownLeft") * 0.4 +
+      s("mouthFrownRight") * 0.4 +
+      s("browInnerUp") * 0.2
   );
 
   // Angry: คิ้วขมวดลง + จมูกย่น + ขากรรไกรเกร็ง
@@ -33,15 +31,15 @@ export function analyzeEmotion(blendshapes: any[]): EmotionScores {
       s("mouthPressRight") * 0.05
   );
 
-  // Surprised: เบิกตากว้าง + คิ้วยกขึ้น + อ้าปาก (ลด sensitivity ลงเพราะคนตากว้างมักโดนจับผิดเป็นตกใจ)
+  // Surprised: เบิกตากว้าง + คิ้วยกขึ้น + อ้าปาก (เพิ่มน้ำหนักการอ้าปากให้ชัดขึ้น)
   const rawSurprised =
-    s("eyeWideLeft") * 0.2 +
-    s("eyeWideRight") * 0.2 +
-    s("browOuterUpLeft") * 0.15 +
-    s("browOuterUpRight") * 0.15 +
+    s("eyeWideLeft") * 0.15 +
+    s("eyeWideRight") * 0.15 +
+    s("browOuterUpLeft") * 0.1 +
+    s("browOuterUpRight") * 0.1 +
     s("browInnerUp") * 0.1 +
-    s("jawOpen") * 0.2;
-  const surprised = Math.min(Math.round(rawSurprised * 130), 100);
+    s("jawOpen") * 0.4;
+  const surprised = Math.min(Math.round(rawSurprised * 160), 100);
 
   // Neutral: หน้านิ่ง (คะแนนจะสูงเมื่ออารมณ์อื่นต่ำทั้งหมด)
   // ให้ค่าเริ่มต้นสูง แต่จะถูกหักลบด้วยอารมณ์ที่ชัดเจน
