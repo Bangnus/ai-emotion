@@ -176,12 +176,29 @@ export function useEmotionBooth() {
       setCountdown(null);
 
       try {
-        const img = await takeScreenshot();
-        const photoUrl = await uploadImage(img);
-        const qrCode = await generateQR(photoUrl);
-        setQR(qrCode);
+        // 1. Screenshot from video
+        const img = takeScreenshot(videoRef.current!);
+
+        // 2. Try upload → QR code
+        try {
+          const photoUrl = await uploadImage(img);
+          const qrCode = await generateQR(photoUrl);
+          setQR(qrCode);
+        } catch (uploadErr) {
+          console.warn(
+            "Upload failed, falling back to direct download:",
+            uploadErr
+          );
+          // Fallback: download directly
+          const link = document.createElement("a");
+          link.href = img;
+          link.download = `emotion-booth-${Date.now()}.png`;
+          link.click();
+          // Reset so user can try again
+          isCapturing.current = false;
+        }
       } catch (err) {
-        console.error("Capture failed:", err);
+        console.error("Screenshot failed:", err);
         isCapturing.current = false;
       }
     }

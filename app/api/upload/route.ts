@@ -10,15 +10,15 @@ export async function POST(req: NextRequest) {
     }
 
     // Convert base64 to buffer
-    const base64Data = image.replace(/^data:image\/png;base64,/, "");
+    const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
     const buffer = Buffer.from(base64Data, "base64");
 
     // Upload to Vercel Blob
-    const filename = `photo-${Date.now()}.png`;
+    const filename = `photo-${Date.now()}.jpg`;
 
     const blob = await put(filename, buffer, {
       access: "public",
-      contentType: "image/png",
+      contentType: "image/jpeg",
     });
 
     // blob.url = full public URL like
