@@ -42,6 +42,7 @@ export function useEmotionBooth() {
 
   const [faces, setFaces] = useState<FaceData[]>([]);
   const [qr, setQR] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [palmDetected, setPalmDetected] = useState(false);
   const [flash, setFlash] = useState(false);
@@ -97,7 +98,7 @@ export function useEmotionBooth() {
 
           const emotion = faceResult.faceBlendshapes[i]
             ? analyzeEmotion(faceResult.faceBlendshapes[i].categories)
-            : { happy: 0, sad: 0, angry: 0, surprised: 0 };
+            : { happy: 0, sad: 0, angry: 0, surprised: 0, neutral: 100 };
 
           detectedFaces.push({ box: smoothedBox, emotion });
         }
@@ -179,11 +180,12 @@ export function useEmotionBooth() {
 
     async function capture() {
       try {
-        const imgBlob = takeScreenshot(videoRef.current!);
+        const imgBlob = await takeScreenshot(videoRef.current!);
 
         try {
           const photoUrl = await uploadImage(imgBlob);
           const qrCode = await generateQR(photoUrl);
+          setImageUrl(photoUrl);
           setQR(qrCode);
         } catch (uploadErr) {
           console.warn("Upload failed, direct download:", uploadErr);
@@ -212,6 +214,7 @@ export function useEmotionBooth() {
 
   const retake = () => {
     setQR(null);
+    setImageUrl(null);
     setCountdown(null);
     setFlash(false);
     palmStartTime.current = null;
@@ -222,6 +225,7 @@ export function useEmotionBooth() {
     videoRef,
     faces,
     qr,
+    imageUrl,
     countdown,
     palmDetected,
     flash,

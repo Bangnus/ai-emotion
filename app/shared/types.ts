@@ -3,6 +3,7 @@ export type EmotionScores = {
   sad: number;
   angry: number;
   surprised: number;
+  neutral: number;
 };
 
 export type FaceBox = {

@@ -6,8 +6,16 @@ import QRDisplay from "@/app/presentation/components/QRDisplay";
 import { useEmotionBooth } from "@/app/presentation/hooks/useEmotionBooth";
 
 export default function Page() {
-  const { videoRef, faces, qr, countdown, palmDetected, flash, retake } =
-    useEmotionBooth();
+  const {
+    videoRef,
+    faces,
+    qr,
+    imageUrl,
+    countdown,
+    palmDetected,
+    flash,
+    retake,
+  } = useEmotionBooth();
 
   return (
     <main className="relative w-full h-screen overflow-hidden bg-black font-sans">
@@ -48,7 +56,7 @@ export default function Page() {
 
       {/* Capture Hint */}
       {!qr && !palmDetected && !flash && faces.length > 0 && (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
           <div className="bg-black/50 backdrop-blur-sm px-6 py-3 rounded-full border border-white/15 flex items-center gap-3">
             <span className="text-3xl">✋</span>
             <span className="text-white/80 text-sm font-medium">
@@ -78,7 +86,7 @@ export default function Page() {
       )}
 
       {/* "Get Ready" message after countdown */}
-      {countdown === 0 && !flash && (
+      {/* {countdown === 0 && !flash && (
         <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
           <div className="flex flex-col items-center gap-3">
             <span className="text-6xl">📸</span>
@@ -87,7 +95,7 @@ export default function Page() {
             </span>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Flash Effect */}
       {flash && (
@@ -100,7 +108,7 @@ export default function Page() {
       )}
 
       {/* QR Popup */}
-      <QRDisplay qr={qr} onRetake={retake} />
+      <QRDisplay qr={qr} imageUrl={imageUrl} onRetake={retake} />
     </main>
   );
 }

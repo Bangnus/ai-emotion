@@ -1,4 +1,4 @@
-export function takeScreenshot(video: HTMLVideoElement): Blob {
+export async function takeScreenshot(video: HTMLVideoElement): Promise<Blob> {
   const MAX_WIDTH = 1280;
 
   // Scale down if needed
@@ -21,14 +21,15 @@ export function takeScreenshot(video: HTMLVideoElement): Blob {
   ctx.scale(-1, 1);
   ctx.drawImage(video, 0, 0, w, h);
 
-  // Convert to Blob synchronously via dataURL
-  const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
-  const byteString = atob(dataUrl.split(",")[1]);
-  const mimeType = "image/jpeg";
-  const ab = new ArrayBuffer(byteString.length);
-  const ia = new Uint8Array(ab);
-  for (let i = 0; i < byteString.length; i++) {
-    ia[i] = byteString.charCodeAt(i);
-  }
-  return new Blob([ab], { type: mimeType });
+  // Convert to Blob asynchronously using native API (prevents binary corruption)
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error("Canvas toBlob failed"));
+      },
+      "image/jpeg",
+      0.85
+    );
+  });
 }

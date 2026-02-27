@@ -39,6 +39,7 @@ const EMOTION_EMOJI: Record<string, string> = {
   sad: "😢",
   angry: "😠",
   surprised: "😲",
+  neutral: "😐",
 };
 
 function useVideoMapping(videoRef: RefObject<HTMLVideoElement | null>) {
@@ -159,9 +160,15 @@ export default function FaceBoxOverlay({ faces, videoRef }: Props) {
                   {EMOTION_EMOJI[dominantKey]}
                 </span>
                 <span
-                  className={`text-sm font-bold uppercase tracking-wider ${color.text}`}
+                  className={`text-sm font-bold tracking-wider ${color.text}`}
                 >
-                  {dominantKey}
+                  {{
+                    happy: "มีความสุข",
+                    sad: "เศร้า",
+                    angry: "โกรธ",
+                    surprised: "ตกใจ",
+                    neutral: "ปกติ",
+                  }[dominantKey] || dominantKey}
                 </span>
                 <span className="text-xs text-gray-400 ml-1">
                   {dominantVal}%

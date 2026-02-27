@@ -10,10 +10,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Upload to Vercel Blob
-    const blob = await put(file.name, file, {
-      access: "private",
-      contentType: file.type,
+    // Extract binary buffer from the File object
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    // Upload to Vercel Blob using raw buffer
+    const blob = await put(file.name, buffer, {
+      access: "public",
+      contentType: "image/jpeg",
     });
 
     return NextResponse.json({ url: blob.url });

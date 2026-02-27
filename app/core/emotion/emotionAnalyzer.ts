@@ -33,17 +33,22 @@ export function analyzeEmotion(blendshapes: any[]): EmotionScores {
       s("mouthPressRight") * 0.05
   );
 
-  // Surprised: เบิกตากว้าง + คิ้วยกขึ้น + อ้าปาก
-  const surprised = normalize(
+  // Surprised: เบิกตากว้าง + คิ้วยกขึ้น + อ้าปาก (ลด sensitivity ลงเพราะคนตากว้างมักโดนจับผิดเป็นตกใจ)
+  const rawSurprised =
     s("eyeWideLeft") * 0.2 +
-      s("eyeWideRight") * 0.2 +
-      s("browOuterUpLeft") * 0.15 +
-      s("browOuterUpRight") * 0.15 +
-      s("browInnerUp") * 0.1 +
-      s("jawOpen") * 0.2
-  );
+    s("eyeWideRight") * 0.2 +
+    s("browOuterUpLeft") * 0.15 +
+    s("browOuterUpRight") * 0.15 +
+    s("browInnerUp") * 0.1 +
+    s("jawOpen") * 0.2;
+  const surprised = Math.min(Math.round(rawSurprised * 130), 100);
 
-  return { happy, sad, angry, surprised };
+  // Neutral: หน้านิ่ง (คะแนนจะสูงเมื่ออารมณ์อื่นต่ำทั้งหมด)
+  // ให้ค่าเริ่มต้นสูง แต่จะถูกหักลบด้วยอารมณ์ที่ชัดเจน
+  const maxEmotion = Math.max(happy, sad, angry, surprised);
+  const neutral = Math.max(0, 100 - maxEmotion);
+
+  return { happy, sad, angry, surprised, neutral };
 }
 
 function normalize(v: number) {
