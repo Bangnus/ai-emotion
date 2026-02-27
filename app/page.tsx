@@ -6,7 +6,7 @@ import QRDisplay from "@/app/presentation/components/QRDisplay";
 import { useEmotionBooth } from "@/app/presentation/hooks/useEmotionBooth";
 
 export default function Page() {
-  const { videoRef, faces, qr, countdown, palmDetected, retake } =
+  const { videoRef, faces, qr, countdown, palmDetected, flash, retake } =
     useEmotionBooth();
 
   return (
@@ -47,7 +47,7 @@ export default function Page() {
       </div>
 
       {/* Capture Hint */}
-      {!qr && !palmDetected && faces.length > 0 && (
+      {!qr && !palmDetected && !flash && faces.length > 0 && (
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
           <div className="bg-black/50 backdrop-blur-sm px-6 py-3 rounded-full border border-white/15 flex items-center gap-3">
             <span className="text-3xl">✋</span>
@@ -61,18 +61,13 @@ export default function Page() {
       {/* Palm Detected + Countdown */}
       {palmDetected && countdown !== null && countdown > 0 && (
         <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
-          {/* Darkened overlay */}
           <div className="absolute inset-0 bg-black/30" />
-
-          {/* Countdown circle */}
           <div className="relative flex flex-col items-center gap-4">
-            {/* Number */}
             <div className="w-40 h-40 rounded-full bg-black/60 backdrop-blur-xl border-4 border-cyan-400 shadow-[0_0_40px_rgba(34,211,238,0.5)] flex items-center justify-center animate-pulse">
               <span className="text-8xl font-black text-cyan-400 drop-shadow-[0_0_20px_rgba(34,211,238,0.8)]">
                 {countdown}
               </span>
             </div>
-            {/* Label */}
             <div className="bg-black/50 backdrop-blur-sm px-4 py-2 rounded-full">
               <span className="text-white text-lg font-bold tracking-wider">
                 ✋ HOLD PALM...
@@ -82,9 +77,26 @@ export default function Page() {
         </div>
       )}
 
-      {/* Flash effect on capture */}
-      {countdown === 0 && (
-        <div className="absolute inset-0 z-40 bg-white animate-[flash_0.5s_ease-out_forwards] pointer-events-none" />
+      {/* "Get Ready" message after countdown */}
+      {countdown === 0 && !flash && (
+        <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
+          <div className="flex flex-col items-center gap-3">
+            <span className="text-6xl">📸</span>
+            <span className="text-white text-2xl font-bold tracking-wider animate-pulse">
+              เตรียมตัว...
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Flash Effect */}
+      {flash && (
+        <div
+          className="absolute inset-0 z-40 bg-white pointer-events-none"
+          style={{
+            animation: "flash 0.6s ease-out forwards",
+          }}
+        />
       )}
 
       {/* QR Popup */}

@@ -3,26 +3,19 @@ import { put } from "@vercel/blob";
 
 export async function POST(req: NextRequest) {
   try {
-    const { image } = await req.json();
+    const formData = await req.formData();
+    const file = formData.get("file") as File | null;
 
-    if (!image) {
-      return NextResponse.json({ error: "No image provided" }, { status: 400 });
+    if (!file) {
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Convert base64 to buffer
-    const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
-    const buffer = Buffer.from(base64Data, "base64");
-
     // Upload to Vercel Blob
-    const filename = `photo-${Date.now()}.jpg`;
-
-    const blob = await put(filename, buffer, {
+    const blob = await put(file.name, file, {
       access: "public",
-      contentType: "image/jpeg",
+      contentType: file.type,
     });
 
-    // blob.url = full public URL like
-    // https://xxxxx.public.blob.vercel-storage.com/photo-123.png
     return NextResponse.json({ url: blob.url });
   } catch (err) {
     console.error("Upload error:", err);

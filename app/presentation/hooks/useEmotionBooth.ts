@@ -21,9 +21,9 @@ import { generateQR } from "@/app/infrastructure/qr/qrService";
 import { FaceData, FaceBox } from "@/app/shared/types";
 
 const COUNTDOWN_SECONDS = 3;
-const SMOOTH_FACTOR = 0.35; // 0 = no movement, 1 = instant (raw)
+const CAPTURE_DELAY_MS = 1500; // delay after countdown to let user lower hand
+const SMOOTH_FACTOR = 0.35;
 
-// Lerp helper for smooth interpolation
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
@@ -44,12 +44,11 @@ export function useEmotionBooth() {
   const [qr, setQR] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [palmDetected, setPalmDetected] = useState(false);
+  const [flash, setFlash] = useState(false);
 
   const isCapturing = useRef(false);
   const palmStartTime = useRef<number | null>(null);
   const countdownTimer = useRef<number | null>(null);
-
-  // Store previous frame's smoothed boxes for interpolation
   const prevBoxes = useRef<FaceBox[]>([]);
 
   useEffect(() => {
@@ -92,7 +91,6 @@ export function useEmotionBooth() {
             height: maxY - minY,
           };
 
-          // Apply smoothing if we have previous data for this face
           const smoothedBox = prevBoxes.current[i]
             ? smoothBox(prevBoxes.current[i], rawBox)
             : rawBox;
@@ -101,15 +99,10 @@ export function useEmotionBooth() {
             ? analyzeEmotion(faceResult.faceBlendshapes[i].categories)
             : { happy: 0, sad: 0, angry: 0, surprised: 0 };
 
-          detectedFaces.push({
-            box: smoothedBox,
-            emotion,
-          });
+          detectedFaces.push({ box: smoothedBox, emotion });
         }
 
-        // Update previous boxes for next frame
         prevBoxes.current = detectedFaces.map((f) => f.box);
-
         setFaces(detectedFaces);
       } else {
         prevBoxes.current = [];
@@ -126,7 +119,6 @@ export function useEmotionBooth() {
 
         if (hasOpenPalm) {
           setPalmDetected(true);
-
           if (palmStartTime.current === null) {
             palmStartTime.current = Date.now();
             startCountdown();
@@ -156,7 +148,9 @@ export function useEmotionBooth() {
           clearInterval(countdownTimer.current!);
           countdownTimer.current = null;
           setCountdown(0);
-          capture();
+
+          // Flash effect → delay → then capture
+          triggerCapture();
         }
       }, 1000);
     }
@@ -169,32 +163,36 @@ export function useEmotionBooth() {
       setCountdown(null);
     }
 
-    async function capture() {
-      if (isCapturing.current) return;
+    function triggerCapture() {
       isCapturing.current = true;
       setPalmDetected(false);
-      setCountdown(null);
 
+      // Show flash
+      setFlash(true);
+
+      // Wait for user to lower hand, then take the actual photo
+      setTimeout(() => {
+        setFlash(false);
+        capture();
+      }, CAPTURE_DELAY_MS);
+    }
+
+    async function capture() {
       try {
-        // 1. Screenshot from video
-        const img = takeScreenshot(videoRef.current!);
+        const imgBlob = takeScreenshot(videoRef.current!);
 
-        // 2. Try upload → QR code
         try {
-          const photoUrl = await uploadImage(img);
+          const photoUrl = await uploadImage(imgBlob);
           const qrCode = await generateQR(photoUrl);
           setQR(qrCode);
         } catch (uploadErr) {
-          console.warn(
-            "Upload failed, falling back to direct download:",
-            uploadErr
-          );
-          // Fallback: download directly
+          console.warn("Upload failed, direct download:", uploadErr);
+          const url = URL.createObjectURL(imgBlob);
           const link = document.createElement("a");
-          link.href = img;
-          link.download = `emotion-booth-${Date.now()}.png`;
+          link.href = url;
+          link.download = `emotion-booth-${Date.now()}.jpg`;
           link.click();
-          // Reset so user can try again
+          URL.revokeObjectURL(url);
           isCapturing.current = false;
         }
       } catch (err) {
@@ -215,6 +213,7 @@ export function useEmotionBooth() {
   const retake = () => {
     setQR(null);
     setCountdown(null);
+    setFlash(false);
     palmStartTime.current = null;
     isCapturing.current = false;
   };
@@ -225,6 +224,7 @@ export function useEmotionBooth() {
     qr,
     countdown,
     palmDetected,
+    flash,
     retake,
   };
 }

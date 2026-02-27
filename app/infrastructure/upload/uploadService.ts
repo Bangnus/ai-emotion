@@ -1,16 +1,17 @@
-export async function uploadImage(base64Image: string): Promise<string> {
+export async function uploadImage(imageBlob: Blob): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", imageBlob, `photo-${Date.now()}.jpg`);
+
   const res = await fetch("/api/upload", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ image: base64Image }),
+    body: formData,
   });
 
   if (!res.ok) {
-    throw new Error("Upload failed");
+    const err = await res.text();
+    throw new Error(`Upload failed: ${err}`);
   }
 
   const { url } = await res.json();
-
-  // Vercel Blob returns a full public URL already
   return url;
 }
